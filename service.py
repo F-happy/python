@@ -7,45 +7,47 @@
 
 import socket
 import threading
-import getopt
 import sys
 import string
+import ConfigParser
 
+cf = ConfigParser.ConfigParser()
 
-opts, args = getopt.getopt(sys.argv[1:], "hp:l:", ["help", "port=", "list="])
+cf.read('default.conf')
 
-#设置默认的最大连接数和端口号，在没有使用命令传入参数的时候将使用默认的值
-list = 50
-port = 9999
-
-
-def usage():
-    print """
-    -h --help             print the help
-    -l --list             Maximum number of connections
-    -p --port             To monitor the port number
-    """
-for op, value in opts:
-    if op in ("-l", "--list"):
-        list = string.atol(value)
-    elif op in ("-p", "--port"):
-        port = string.atol(value)
-    elif op in ("-h"):
-        usage()
-        sys.exit()
+ip = cf.get('cache', 'ip')
+port = cf.getint('cache', 'port')
+Listen = cf.getint('cache', 'Listen')
+timeout = cf.getint('cache', 'timeout')
+Accept_size = cf.getint('cache', 'Accept_size')
 
 
 def jonnyS(client, address):
     try:
+
+        # client, address = args
     #设置超时时间
-        client.settimeout(500)
+        client.settimeout(timeout)
+
     #接收数据的大小
-        buf = client.recv(2048)
+        buf = client.recv(Accept_size)
+
     #将接收到的信息原样的返回到客户端中
+        print buf
+        bufs = buf.split('+')
+        settings = bufs[0]
+        setting = settings.split(' ')
+        operation = setting[0]
+        key = setting[1]
+        flags = setting[2]
+        expiration_time = setting[3]
+        value = bufs[1]
         client.send(buf)
+
     #超时后显示退出
     except socket.timeout:
         print 'time out'
+
     #关闭与客户端的连接
     client.close()
 
@@ -54,14 +56,17 @@ def main():
     #创建socket对象。调用socket构造函数
     #AF_INET为ip地址族，SOCK_STREAM为流套接字
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #将socket绑定到指定地址，第一个参数为ip地址，第二个参数为端口号
-    sock.bind(('localhost', port))
+
+    #将socket绑定到指定地址，第一个参数为ip地址，第二个参数为端口号
+    sock.bind((ip, port))
+
     #设置最多连接数量
-    sock.listen(list)
+    sock.listen(Listen)
     while True:
+
         #服务器套接字通过socket的accept方法等待客户请求一个连接
-        client, address = sock.accept()
-        thread = threading.Thread(target=jonnyS, args=(client, address))
+        # client, address = sock.accept()
+        thread = threading.Thread(target=jonnyS, args=sock.accept())
         thread.start()
 
 if __name__ == '__main__':
