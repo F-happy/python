@@ -43,20 +43,17 @@ def main():
     sock.connect((host, port))
 
     #客户端输入一个字符串给服务器
-    message = raw_input("inupt:")
-    message2 = raw_input("inupt:")
-    message3 = raw_input("inupt:")
+    operations = raw_input("operation>")
+    values = raw_input("value>")
+    stops = raw_input(">")
     while True:
-        if message3 == 'STOP':
-            ms = message + '+' + message2
+        if stops == 'STOP':
+            ms = operations + '+' + values
             sock.send(ms)
             break
         else:
-            message2 = message2 + message3
-            message3 = raw_input("inupt:")
-    # sock.send(message)
-    # sock.send(message2)
-    # sock.send(message3)
+            values = values + stops
+            stops = raw_input(">")
     print 'ServerOupt:' + sock.recv(2048)
 
     #关闭与服务器的连接

@@ -10,6 +10,7 @@ import threading
 import sys
 import string
 import ConfigParser
+import jCache
 
 cf = ConfigParser.ConfigParser()
 
@@ -26,13 +27,13 @@ def jonnyS(client, address):
     try:
 
         # client, address = args
-    #设置超时时间
+        #设置超时时间
         client.settimeout(timeout)
 
-    #接收数据的大小
+        #接收数据的大小
         buf = client.recv(Accept_size)
 
-    #将接收到的信息原样的返回到客户端中
+        #将接收到的信息原样的返回到客户端中
         print buf
         bufs = buf.split('+')
         settings = bufs[0]
@@ -42,6 +43,8 @@ def jonnyS(client, address):
         flags = setting[2]
         expiration_time = setting[3]
         value = bufs[1]
+        if flags == '1':
+            d1(operation, key, expiration_time, value)
         client.send(buf)
 
     #超时后显示退出
@@ -52,7 +55,17 @@ def jonnyS(client, address):
     client.close()
 
 
+def d1(operation, key, expiration_time, value):
+    try:
+        cache = jCache.LRUCache(10)
+        cache.set(key, value)
+        return True
+    except:
+        return False
+
+
 def main():
+
     #创建socket对象。调用socket构造函数
     #AF_INET为ip地址族，SOCK_STREAM为流套接字
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
